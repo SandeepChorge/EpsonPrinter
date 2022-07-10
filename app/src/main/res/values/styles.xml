@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CustomDialogs" parent="android:Theme.Dialog">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:fontFamily">sans-serif-condensed-medium</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+</resources>
