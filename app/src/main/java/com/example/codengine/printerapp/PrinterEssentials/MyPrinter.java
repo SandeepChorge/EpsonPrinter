@@ -28,8 +28,10 @@ import com.epson.eposprint.Print;
 import com.example.codengine.printerapp.R;
 import com.example.codengine.printerapp.Utils.AppUtils;
 
+import java.util.ArrayList;
 
-public class MyPrinter implements ReceiveListener, StatusChangeListener {
+
+public class MyPrinter implements ReceiveListener {
 
     Activity context;
     String printerName;
@@ -40,13 +42,23 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
     MyPrinterCallback myPrinterCallback;
     Printer printer;
     AppUtils appUtils;
+
     private int counter = 0;
     private long RETRY_TIMEOUT = 2000;
     String ERR = "";
 
+    ArrayList<MyData> myDataArrayList;
+
+    public ArrayList<MyData> getMyDataArrayList() {
+        return myDataArrayList;
+    }
+
+    public void setMyDataArrayList(ArrayList<MyData> myDataArrayList) {
+        this.myDataArrayList = myDataArrayList;
+    }
 
     /*Printer.TM_U220;
-    Printer.MODEL_ANK;*/
+            Printer.MODEL_ANK;*/
     public MyPrinter(Activity context,String printerName,String data,
                      String IPAddress, int printerType, int printerModel,
                      MyPrinterCallback myPrinterCallback){
@@ -60,66 +72,83 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
         this.myPrinterCallback = myPrinterCallback;
         appUtils = new AppUtils();
 
-        makeLog(printerName+" Printer Type "+printerType+" Pritner Model "+printerModel);
+        makeLog(printerName+"Printer Type "+printerType+" Pritner Model "+printerModel);
 
     }
 
     @Override
-    public void onPtrReceive(Printer printer, int code, PrinterStatusInfo printerStatusInfo, String s) {
+    public void onPtrReceive(Printer printergot, int code, PrinterStatusInfo printerStatusInfo, String s) {
+        printThreadDetails("onPtrReceive");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                printThreadDetails("onPtrReceive");
+        try{
+            context.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        printThreadDetails(printerName+ " switched to UI thread in onPtrReceive");
+                        ERR = PrinterExceptions.getPtrReceiveCode(printerName,code);
+                        RetryEnum result = RetryEnum.RETRY_AND_DISCONNECT;
+                        switch (code){
+                            case Epos2CallbackCode.CODE_SUCCESS:
+                                //disconnect
+                                result = RetryEnum.DISCONNECT;
+                                break;
+                            case Epos2CallbackCode.CODE_PRINTING:
+                                makeToast(printerName+" ON_PTR_RECEIVE "+ERR);
+                                result = RetryEnum.DO_NOTHING;
+                                break;
 
-                ERR = PrinterExceptions.getPtrReceiveCode(printerName,code);
-                RetryEnum result = RetryEnum.RETRY_AND_DISCONNECT;
-                switch (code){
-                    case Epos2CallbackCode.CODE_SUCCESS:
-                        //disconnect
-                        result = RetryEnum.DISCONNECT;
-                        break;
-                    case Epos2CallbackCode.CODE_PRINTING:
-                        makeToast(printerName+" ON_PTR_RECEIVE "+ERR);
-                        result = RetryEnum.DO_NOTHING;
-                        break;
+                            case Epos2CallbackCode.CODE_ERR_CUTTER:
+                            case Epos2CallbackCode.CODE_ERR_EMPTY:
+                                ERR = "Paper roll is empty.Load your printer with paper roll and try again.";
+                                result = RetryEnum.SHOW_RETRY_POPUP;
+                                break;
 
-                    case Epos2CallbackCode.CODE_ERR_CUTTER:
-                    case Epos2CallbackCode.CODE_ERR_EMPTY:
-                        ERR = "Paper roll is empty.Load your printer with paper roll and try again.";
-                        result = RetryEnum.SHOW_RETRY_POPUP;
-                        break;
+                            case Epos2CallbackCode.CODE_ERR_UNRECOVERABLE:
+                            case Epos2CallbackCode.CODE_ERR_NOT_FOUND:
+                            case Epos2CallbackCode.CODE_ERR_SYSTEM:
+                            case Epos2CallbackCode.CODE_ERR_PORT:
+                            case Epos2CallbackCode.CODE_ERR_JOB_NOT_FOUND:
+                            case Epos2CallbackCode.CODE_ERR_SPOOLER:
+                            case Epos2CallbackCode.CODE_ERR_TOO_MANY_REQUESTS:
+                            case Epos2CallbackCode.CODE_ERR_REQUEST_ENTITY_TOO_LARGE:
+                                result = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
+                                break;
 
-                    case Epos2CallbackCode.CODE_ERR_UNRECOVERABLE:
-                    case Epos2CallbackCode.CODE_ERR_NOT_FOUND:
-                    case Epos2CallbackCode.CODE_ERR_SYSTEM:
-                    case Epos2CallbackCode.CODE_ERR_PORT:
-                    case Epos2CallbackCode.CODE_ERR_JOB_NOT_FOUND:
-                    case Epos2CallbackCode.CODE_ERR_SPOOLER:
-                    case Epos2CallbackCode.CODE_ERR_TOO_MANY_REQUESTS:
-                    case Epos2CallbackCode.CODE_ERR_REQUEST_ENTITY_TOO_LARGE:
-                        result = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
-                        break;
+                            case Epos2CallbackCode.CODE_ERR_BATTERY_LOW:
+                                ERR = "Connect battery and try again";
+                                result = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
+                                break;
 
-                    case Epos2CallbackCode.CODE_ERR_BATTERY_LOW:
-                        ERR = "Connect battery and try again";
-                        result = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
-                        break;
+                            default:
+                                result = RetryEnum.RETRY_AND_DISCONNECT;
+                                break;
+                        }
 
-                    default:
-                        result = RetryEnum.RETRY_AND_DISCONNECT;
-                        break;
+                        reportException(printerName+" OnPtr : "+ERR);
+                        RetryEnum finalResult = result;
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                makeToast(printerName+" triggering on new thread in UI thread");
+                                printThreadDetails("OnPtrNEwThread");
+                                retryPrinterConnection(finalResult,ERR);
+                            }
+                        }).start();
+
+                    }catch (Exception ex){
+                        ex.printStackTrace();
+                        reportException("Exception in OnPTR Receive runOnUI");
+                    }
                 }
+            });
+        }catch (Exception ex){
+            ex.printStackTrace();
+            reportException("Exception in OnPTR Receive for runOnUI");
+        }
 
-                reportException(printerName+" OnPtr : "+ERR);
-                retryPrinterConnection(result,ERR);
-            }
-        });
 
-    }
 
-    @Override
-    public void onPtrStatusChange(Printer printer, int i) {
 
     }
 
@@ -156,7 +185,7 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
         }
     }
 
-    private boolean discoverPrinter() {
+    public boolean discoverPrinter() {
         printThreadDetails("discoverPrinter");
         try {
             makeLog("Discovering PRinter");
@@ -224,7 +253,35 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
         try{
             printer = new Printer(printerType, printerModel, context);
             makeLog(printerName+" initializePrinter done");
-            createPrintData(data);
+
+
+            if (getMyDataArrayList()!=null && getMyDataArrayList().size()>0){
+
+                boolean canProceed = true;
+                for (int i=0;i<getMyDataArrayList().size();i++){
+                 makeLog("In "+i+" ITEM in FOR LOOP CREATING DATA");
+                     if (!createPrintData(getMyDataArrayList().get(i).getData())){
+                         canProceed = false;
+                         makeLog("SOMETHING WRONG WITH CREATE DATA "+i+" BREAKING FLOW");
+                         makeToast("SOMETHING WRONG WITH CREATE DATA "+i+" BREAKING FLOW");
+                         break;
+                     }
+                }
+
+                if (canProceed) {
+                    makeLog("CAN PROCEED IS TRUE SO CONNECTING PRINTER");
+                    connectPrinter();
+                }else{
+                    makeToast("CAN PROCEED IS FALSE SO RETURNING FALSE ");
+                    makeLog("CAN PROCEED IS FALSE SO RETURNING FALSE ");
+                }
+
+            }else {
+                makeToast("NO DATA TO BE BUILD");
+                makeLog("NO DATA TO BE BUILD");
+                return false;
+            }
+
             return true;
         }catch (Epos2Exception e){
             ERR = "INITIALIZE_ERR : "+PrinterExceptions.getInitializeException(printerName,e);
@@ -243,51 +300,68 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
             final int barcodeWidth = 2;
             final int barcodeHeight = 100;
             if (printer == null) {
-                makeToast("Printer is null in createPrintData returning");
+                makeToast(printerName+" Printer is null in createPrintData returning");
                 return false;
             }
 
-            method = "addTextAlign";
-            printer.addTextAlign(Printer.ALIGN_CENTER);
 
-            method = "addImage";
-            printer.addImage(logoData, 0, 0,
-                    logoData.getWidth(),
-                    logoData.getHeight(),
-                    Printer.COLOR_1,
-                    Printer.MODE_MONO,
-                    Printer.HALFTONE_DITHER,
-                    Printer.PARAM_DEFAULT,
-                    Printer.COMPRESS_AUTO);
+                method = "addTextAlign";
+                printer.addTextAlign(Printer.ALIGN_CENTER);
 
-            method = "addFeedLine";
-            printer.addFeedLine(1);
-            method = "addTextSize";
-            printer.addTextSize(1, 1);
+                method = "addImage";
+                printer.addImage(logoData, 0, 0,
+                        logoData.getWidth(),
+                        logoData.getHeight(),
+                        Printer.COLOR_1,
+                        Printer.MODE_MONO,
+                        Printer.HALFTONE_DITHER,
+                        Printer.PARAM_DEFAULT,
+                        Printer.COMPRESS_AUTO);
+
+                method = "addFeedLine";
+                printer.addFeedLine(1);
+                method = "addTextSize";
+                printer.addTextSize(1, 1);
+
             textData.append("\n");
             method = "addText";
-            printer.addText("#" + printerName+" Print Success");
-            method = "addText";
-            printer.addText(textData.toString());
-            textData.delete(0, textData.length());
-            method = "addCut";
-            printer.addCut(Printer.CUT_FEED);
+            printer.addText("#"+data);
 
-            textData = null;
-            makeLog(printerName+" createPrintData done");
+                textData.append("\n");
+                method = "addText";
+                printer.addText("#" + printerName+" Print Success");
+                method = "addText";
+                printer.addText(textData.toString());
+                textData.delete(0, textData.length());
+                method = "addCut";
+                printer.addCut(Printer.CUT_FEED);
 
-            //Starting Connect Printer
-            connectPrinter();
+                textData = null;
+                makeLog(printerName+" createPrintData done");
+
+
+                //IT IS TEMPORARY MOVED TO INITIALIZE AFTER CREATE DATA
+                //connectPrinter();
+
             return true;
 
-        }catch (Epos2Exception e){
+        }/*catch (Epos2Exception e){
             ERR ="CREATE_DATA_ERR : "+PrinterExceptions.getAddTextException(printerName,e);
             reportException(ERR);
             retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
 
 
             return false;
-        }catch (Exception ex){
+        }*/catch (Exception ex){
+
+            if (ex instanceof Epos2Exception){
+                Epos2Exception e = (Epos2Exception)ex;
+                ERR ="CREATE_DATA_ERR : "+PrinterExceptions.getAddTextException(printerName,e);
+                reportException(ERR);
+                retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
+                return false;
+            }
+            ex.printStackTrace();
             ERR ="CREATE_DATA_ERR_2 :" +ex.getMessage();
             reportException(ERR );
             retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
@@ -325,8 +399,12 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
 
             String tcp = "TCP:" + IPAddress.trim();
             //errorDialog(false,"Trying to connect to "+tcp);
-            makeToast("Trying to connect to "+tcp);
-            printer.connect(tcp, Print.PARAM_DEFAULT);//getTimeOut()
+            makeToast(printerName+ " Trying to connect to "+tcp);
+            if (printerType == Printer.TM_U220)
+                printer.connect(tcp, 30000);
+            else
+                printer.connect(tcp, Print.PARAM_DEFAULT);
+
             makeLog(printerName+" connectPrinter done");
 
             //Checking Printer Status
@@ -341,24 +419,26 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
             makeLog(printerName+" isPrintable check done Can Print "+canPrint);
             if (!canPrint){
                 boolean shouldShowRetry = true;
+                RetryEnum retryEnum = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
                 if (status.getCoverOpen() == Printer.TRUE) {
+                    retryEnum = RetryEnum.DISCONNECT_AND_RETRY_POPUP;
                     ERR = context.getString(R.string.handlingmsg_err_cover_open);
                 }
                 if (status.getPaper() == Printer.PAPER_EMPTY) {
+                    retryEnum = RetryEnum.DISCONNECT_AND_RETRY_POPUP;
                     ERR += context.getString(R.string.handlingmsg_err_receipt_end);
                 }else{
-                    ERR = printerName+" Reboot Printer : ERR "+makeErrorMessage(status);
+                    retryEnum = RetryEnum.DISCONNECT_AND_ERROR_POPUP;
+                    ERR = makeErrorMessage(status);
+                    reportException(printerName+" Reboot Printer : ERR "+makeErrorMessage(status));
                 }
 
-                retryPrinterConnection(shouldShowRetry?RetryEnum.SHOW_RETRY_POPUP:RetryEnum.SHOW_ERROR_POPUP
-                        ,ERR);
+                retryPrinterConnection(retryEnum,ERR);
                 return false;
             }else
             {
                 //proceed for begin transaction
                 //beginTransaction();
-
-                printer.setStatusChangeEventListener(this);
                 sendDataToPrinter();
             }
 
@@ -366,7 +446,10 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
         }catch (Epos2Exception e){
             ERR = "CONNECT_PRINTER_ERR : "+PrinterExceptions.getConnectException(printerName,e);
             reportException(ERR);
-            retryPrinterConnection(RetryEnum.AUTO_RETRY_NO_DISCONNECT,ERR);
+            if (e.getErrorStatus() == Epos2Exception.ERR_ILLEGAL)
+                retryPrinterConnection(RetryEnum.RETRY_AND_DISCONNECT,ERR);
+            else
+                retryPrinterConnection(RetryEnum.AUTO_RETRY_NO_DISCONNECT,ERR);
             return false;
         }
     }
@@ -393,14 +476,26 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
             }
 
             if (toBeDisconnect) {
-              /*  context.runOnUiThread(new Runnable() {
+               /* context.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         try {
+                            printThreadDetails(printerName+" On main thread disconnectPrinter");
                             printer.disconnect();
                             makeLog(printerName+" Disconnect done");
+                            reportException("CHECK DISCONNECT CALLED");
+
+                            if(clearPrinter()){
+                                makeToast("Finalized Process in ClearPrinter");
+                            }else {
+                                makeToast("Unable To Clear Printer");
+                            }
                         } catch (Epos2Exception e) {
                             ERR = "DISCONNECT_ERR : "+ PrinterExceptions.getDisconnectPrinterException(printerName,e);
+                            reportException(ERR);
+                            retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
+                        }catch (Exception ex){
+                            ERR = "EXCP_DISCONNECT_ERR : "+ex.getMessage() ;
                             reportException(ERR);
                             retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
                         }
@@ -419,8 +514,6 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
                     reportException(ERR);
                     retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
                 }
-                /*printer.disconnect();
-                makeLog(printerName+" Disconnect done");*/
             }
             if(clearPrinter()){
                 makeToast("Finalized Process in ClearPrinter");
@@ -440,6 +533,7 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
                 makeLog(printerName+" ALready null in clearPrinter");
                 return true;
             }
+
 
             printer.clearCommandBuffer();
             printer.setReceiveEventListener(null);
@@ -589,7 +683,6 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
                 break;
             case SHOW_RETRY_POPUP:
                 errorDialog(true,error);
-                //showAlertDialogWithMessage(error);
                 break;
             case SHOW_ERROR_POPUP:
                 errorDialog(false,error);
@@ -604,10 +697,19 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
                 break;
             case DISCONNECT_AND_ERROR_POPUP:
                 disconnectPrinter(true);
-                errorDialog(true,error);
+                errorDialog(false,error);
                 break;
             case DO_NOTHING:
                 makeToast(printerName+" WILL DO NOTHING");
+                break;
+            case DISCONNECT_AND_RETRY_POPUP:
+                /*In case if printerStatus is not printable*/
+                if(disconnectPrinter(true)){
+                    errorDialog(true,error);
+                }else {
+                    makeLog(printerName+" unable to disconnect and displaying retry alert");
+                    errorDialog(true,error);
+                }
                 break;
         }
     }
@@ -665,7 +767,7 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
     public void showAlertDialogWithMessage(String exception) {
 
         CardView btnRetry;
-        TextView txtMsg;
+        TextView txtMsg,btnOkTv;
         ImageView imgClose;
 
         final AlertDialog.Builder dilaog =
@@ -676,14 +778,15 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
         final AlertDialog subjectAlertDialog = dilaog.create();
 
         btnRetry = (CardView) view.findViewById(R.id.btnOk);
+        btnOkTv = (TextView) view.findViewById(R.id.btnOkTv);
         txtMsg = (TextView) view.findViewById(R.id.txtMsg);
         imgClose = view.findViewById(R.id.imgClose);
         imgClose.setVisibility(View.VISIBLE);
         txtMsg.setText(exception);
+        btnOkTv.setText("Retry");
         btnRetry.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                counter = 0;
                 if (retryAllowed()) {
                     retry();
                 }else {
@@ -701,7 +804,7 @@ public class MyPrinter implements ReceiveListener, StatusChangeListener {
             });*/
 
         dilaog.setCancelable(false);
-        subjectAlertDialog.setCancelable(true);
+        subjectAlertDialog.setCancelable(false);
         subjectAlertDialog.show();
     }
 

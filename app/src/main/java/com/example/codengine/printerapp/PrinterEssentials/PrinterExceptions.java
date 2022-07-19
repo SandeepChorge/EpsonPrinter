@@ -1,8 +1,14 @@
 package com.example.codengine.printerapp.PrinterEssentials;
 
 
+import static android.os.Build.VERSION.SDK_INT;
+
+import android.content.Context;
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import com.epson.epos2.Epos2CallbackCode;
 import com.epson.epos2.Epos2Exception;
@@ -15,6 +21,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 public class PrinterExceptions {
+
+    public static Context context;
 
     public static String getInitializeException(String key, Epos2Exception e){
         String result ="";
@@ -268,24 +276,52 @@ public class PrinterExceptions {
         return result;
     }
 
+    public static String getDiscoveryStopException(String key, Epos2Exception e){
+        String result ="";
+
+        switch (e.getErrorStatus()){
+            case Epos2Exception.ERR_ILLEGAL:
+                result = "Tried to stop a search while it had not been started.";
+                break;
+
+            case Epos2Exception.ERR_FAILURE:
+                result = "An unknown error occurred.";
+                break;
+            default:
+                result = e.getErrorStatus()+" UNKNOWN ERROR FOUND";
+                break;
+        }
+        makeLog(key,result,e);
+        return result;
+    }
+
     private static void makeLog(String key, String result, Epos2Exception e){
         Log.e(key+"",result);
         appendLog("ERROR--KEY "+key+ " RESULT "+result +" Epos2Exception "+(e!=null?e.getMessage():"EXCEPTN NULL"));
         //e.printStackTrace();
     }
 
-    public static void appendLog(String text)
-    {
-        File folder =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
-        //File logFile = new File(folder,"smartpos/printer-poc-log.txt");
-        File logFile = new File(folder,"RETRY_PRINTER_LOG.txt");
+    public static void appendLog( String text)
+    {
+
+        //    File folder =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        try
+        {
+        if (context==null){
+            //Log.e("COntext is null","Not able to store");
+            return;
+        }
+            File folder =  context.getExternalCacheDir();//context.getFilesDir().getParentFile();
+        File logFile = new File(folder,"PRINTER_APP_LOG.txt");
         if (!logFile.exists())
         {
             try
             {
                 //logFile.getParentFile().mkdirs();
                 logFile.createNewFile();
+
+                //Log.e("LOG FILE ","--> "+logFile.getAbsolutePath());
             }
             catch (Exception e)
             {
@@ -295,10 +331,10 @@ public class PrinterExceptions {
             }
         }else
         {
-
+            //Log.e("LOG FILE ","--> "+logFile.getAbsolutePath());
+        //Log.e("FILE EXISTS","YEP");
         }
-        try
-        {
+
             SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String datePrefix = date.format(System.currentTimeMillis());
             //BufferedWriter for performance, true to set append to file flag

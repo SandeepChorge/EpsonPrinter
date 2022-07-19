@@ -42,16 +42,16 @@ android {
         pickFirst 'lib/arm64-v8a/libc++_shared.so'
     }
 
+}
 
-}/*repositories {
-    google()
-    mavenCentral()
-}*/
+
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 /*----Permission ----*/
-    //implementation 'gun0912.ted:tedpermission:2.1.1'
+
+    implementation 'io.github.ParkSangGwon:tedpermission-normal:3.3.0'
+
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'com.google.android.material:material:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

@@ -7,6 +7,11 @@
     tools:context=".Activity.PrinterPOCMultiple"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,7 +45,7 @@
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:id="@+id/ipaddress"
-            android:text="@string/test_ipaddress2"
+            android:text=""
             android:layout_gravity="center_horizontal"
             android:layout_alignParentLeft="true"/>
 
@@ -131,6 +136,14 @@
         android:text="Print Data"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="20dp"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/shareData"
+            android:text="share Data"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"/>
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -141,4 +154,30 @@
             android:padding="20dp"
             android:text="TEST DATA TO BE DISPLAYED"/>
     </ScrollView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+        <Button
+                android:text="Discover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnDiscover"
+            android:layout_margin="@dimen/_20sdp"/>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/discoverRes"
+            android:padding="@dimen/_20sdp"
+            />
+        </ScrollView>
+    </LinearLayout>
 </LinearLayout>

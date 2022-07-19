@@ -1,26 +1,42 @@
 package com.example.codengine.printerapp.Activity;
 
 
+import static android.os.Build.VERSION.SDK_INT;
+
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.epson.epos2.printer.Printer;
+import com.example.codengine.printerapp.PrinterEssentials.DiscoverPrinter;
+import com.example.codengine.printerapp.PrinterEssentials.DiscoveryEvents;
+import com.example.codengine.printerapp.PrinterEssentials.MyData;
 import com.example.codengine.printerapp.PrinterEssentials.MyPrinter;
 import com.example.codengine.printerapp.PrinterEssentials.PrinterEvents;
 import com.example.codengine.printerapp.PrinterEssentials.PrinterExceptions;
 import com.example.codengine.printerapp.R;
 import com.example.codengine.printerapp.Utils.AppUtils;
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.normal.TedPermission;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.MyPrinterCallback {
 
@@ -37,6 +53,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
 
     AppUtils appUtils;
 
+    Button discoverBtn;
+    TextView discoverRes;
+
 
 
     Thread t1;
@@ -44,19 +63,140 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.multiple);
+        PrinterExceptions.context = this;
         init();
 
+        Log.e("SDK INT ","-->"+SDK_INT);
         printThreadDetails("OnCreateMethod");
 
-        //TedPermission();
-       /* try {
-            setLogSettings(getApplicationContext(),PERIOD_PERMANENT,OUTPUT_STORAGE,null,0,
-                    0,LOGLEVEL_LOW);
+        findViewById(R.id.shareData).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+
+                    File folder =  context.getExternalCacheDir();//context.getFilesDir().getParentFile();
+                    //File logFile = new File(folder+File.separator+"RETRY_PRINTER_LOG.txt");
+
+                    File logFile = new File(folder,"PRINTER_APP_LOG.txt");
+                    if (logFile.exists())
+                    {
+
+                        Log.e("I HRER","YEP");
+                        Uri path = FileProvider.getUriForFile(PrinterPOCMultiple.this,"com.example.codengine.printerapp", logFile);
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType("text/plain");
+                        i.putExtra(Intent.EXTRA_STREAM, path);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(i);
+                    }else {
+                        Log.e("NO","FOUND");
+                    }
+
+
+                }catch (Exception ex){ex.printStackTrace();}
+            }
+        });
+
+
+        try {
+            PermissionListener permissionlistener = new PermissionListener() {
+                @Override
+                public void onPermissionGranted() {
+                    Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+                    /*if (SDK_INT >= Build.VERSION_CODES.R) {
+                        if (!Environment.isExternalStorageManager()) {
+                            Log.e("ALL PERMISSIONS","NO ALL PERM");
+                            Intent intent = new Intent();
+                            intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                            Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
+                            intent.setData(uri);
+                            startActivity(intent);
+                        }else {
+                            Log.e("ALL PERMISSIONS","GRANTED");
+                        }
+                        }*/
+
+                }
+
+                @Override
+                public void onPermissionDenied(List<String> deniedPermissions) {
+                    Toast.makeText(context, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+                }
+            };
+
+            String[] Permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            };//Manifest.permission.MANAGE_EXTERNAL_STORAGE};
+
+            String[] Permissions2 = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+            String[] perm ;
+            if (SDK_INT >= Build.VERSION_CODES.R){
+                perm = Permissions;
+            }else {
+                perm = Permissions2;
+            }
+
+            TedPermission.create()
+                    .setPermissionListener(permissionlistener)
+                    .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+                    .setPermissions(perm)
+                    .check();
+
+
+
 
         }catch (Exception ex){
             ex.printStackTrace();
             PrinterExceptions.appendLog("Exception in set Settings "+ex.getMessage());
-        }*/
+        }
+
+
+        discoverBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                try {
+                   PrinterExceptions.appendLog("---------------------------------NEW-------------------------------- ");
+                    DiscoverPrinter discoverPrinter = new DiscoverPrinter(PrinterPOCMultiple.this, new DiscoverPrinter.DiscoveryResults() {
+                        @Override
+                        public void onDiscoveryResults(DiscoveryEvents discoveryEvent) {
+                            try {
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public synchronized void run() {
+                                        try {
+
+
+                                                String res  = discoverRes.getText().toString();
+                                                res = res+"\n"+discoveryEvent.result;
+                                                discoverRes.setText(res);
+
+
+                                        }catch (Exception e){
+                                            e.printStackTrace();
+                                            discoverRes.setText(discoverRes.getText().toString()+"\n"+e.getMessage());
+                                        }
+                                    }
+                                });
+
+
+                            }catch (Exception ex){
+                                ex.printStackTrace();
+                            }
+                        }
+                    });
+                    discoverPrinter.DisoveryStart(null);
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }
+
+
+            }
+        });
+
 
         printDataBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,12 +205,22 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                 if (!ipaddressEd.getText().toString().isEmpty() //){
                 ){
                     try {
+
+                        ArrayList<MyData> arrayList = new ArrayList<>();
+                        arrayList.add(new MyData("This is 1st Print "));
+                        arrayList.add(new MyData("This is 2nd Print "));
+                        arrayList.add(new MyData("This is 3rdt Print "));
+                        arrayList.add(new MyData("This is 4th Print "));
+                        arrayList.add(new MyData("This is 5th Print "));
+                        arrayList.add(new MyData("This is 6th Print "));
+
                         MyPrinter pritner1 = new MyPrinter(PrinterPOCMultiple.this,
                                 KITCHEN_HOT, "DATA1",
                                 ipaddressEd.getText().toString().trim(),
                                 getPrinterModel(isCheck1.isChecked()),
                                 0,
                                 PrinterPOCMultiple.this);
+                        pritner1.setMyDataArrayList(arrayList);
 
 
                         t1 = new Thread(new Runnable() {
@@ -175,6 +325,14 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         isCheck3 = (CheckBox) findViewById(R.id.check3);
         isCheck4 = (CheckBox) findViewById(R.id.check4);
         //ipaddressEd.setText(appUtils.getStringPrefrences(context, constatnts.SH_APPPREFSOCKETDATA, constatnts.HOTKITCHNPRINTERIPADDRESS));;
+
+        initDiscover();
+    }
+
+
+    public void initDiscover(){
+        discoverBtn = (Button) findViewById(R.id.btnDiscover);
+        discoverRes = (TextView) findViewById(R.id.discoverRes);
     }
 
     private void makeToast(String msg){
