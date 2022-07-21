@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import com.epson.epos2.Epos2Exception;
 import com.epson.epos2.printer.Printer;
 import com.example.codengine.printerapp.PrinterEssentials.DiscoverPrinter;
 import com.example.codengine.printerapp.PrinterEssentials.DiscoveryEvents;
@@ -29,21 +30,28 @@ import com.example.codengine.printerapp.PrinterEssentials.MyData;
 import com.example.codengine.printerapp.PrinterEssentials.MyPrinter;
 import com.example.codengine.printerapp.PrinterEssentials.PrinterEvents;
 import com.example.codengine.printerapp.PrinterEssentials.PrinterExceptions;
+import com.example.codengine.printerapp.PrinterEssentials.ThreadManager.Manager;
+import com.example.codengine.printerapp.PrinterEssentials.ThreadManager.Task;
 import com.example.codengine.printerapp.R;
 import com.example.codengine.printerapp.Utils.AppUtils;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.normal.TedPermission;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.MyPrinterCallback {
 
-    private static final String KITCHEN_HOT = "HOT_PRINTER";
-    private static final String KITCHEN_COLD = "COLD_PRINTER";
-    private static final String KITCHEN_MISC = "MISC_PRINTER";
-    private static final String BAR_PRINTER = "BAR_PRINTER";
+    private static final String KITCHEN_HOT = "HP";
+    private static final String KITCHEN_COLD = "CP";
+    private static final String KITCHEN_MISC = "MP";
+    private static final String BAR_PRINTER = "BP";
     public static Printer printer = null;
     EditText ipaddressEd,ipaddressEd2,ipaddressEd3,ipaddressEd4;
     CheckBox isCheck1,isCheck2,isCheck3,isCheck4;
@@ -56,27 +64,61 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
     Button discoverBtn;
     TextView discoverRes;
 
+    int ColdCounter = 1,BarCounter = 1,HotCounter = 1,MiscCounter = 1;
+    private String getPrinterName(String PrinterName) {
+        String res = "";
+        switch (PrinterName) {
+            case KITCHEN_COLD:
+                res = KITCHEN_COLD + "_" + ColdCounter;
+                ColdCounter = ColdCounter + 1;
+                break;
+            case KITCHEN_HOT:
+                res = KITCHEN_HOT + "_" + HotCounter;
+                HotCounter = HotCounter + 1;
+                break;
+            case KITCHEN_MISC:
+                res = KITCHEN_MISC + "_" + MiscCounter;
+                MiscCounter = MiscCounter + 1;
+                break;
+            case BAR_PRINTER:
+                res = BAR_PRINTER + "_" + BarCounter;
+                BarCounter = BarCounter + 1;
+                break;
+        }
+        return res;
+    }
+    SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
-    Thread t1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.multiple);
+
         PrinterExceptions.context = this;
+
+        Manager.CORE_POOL_SIZE = 10;//Runtime.getRuntime().availableProcessors()*2;
+        Manager.MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors()*2;//10;
+        PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
+
         init();
+        try {
+            com.epson.epos2.Log.setLogSettings(context, com.epson.epos2.Log.PERIOD_PERMANENT, com.epson.epos2.Log.OUTPUT_STORAGE, null, 0, 50, com.epson.epos2.Log.LOGLEVEL_LOW);
+        } catch (Epos2Exception e) {
+            Log.d("PrintL", e.getLocalizedMessage());
+            e.printStackTrace();
+        }
 
         Log.e("SDK INT ","-->"+SDK_INT);
-        printThreadDetails("OnCreateMethod");
+     //   printThreadDetails("OnCreateMethod");
 
-        findViewById(R.id.shareData).setOnClickListener(new View.OnClickListener() {
+       /* findViewById(R.id.shareData).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
 
                     File folder =  context.getExternalCacheDir();//context.getFilesDir().getParentFile();
                     //File logFile = new File(folder+File.separator+"RETRY_PRINTER_LOG.txt");
-
                     File logFile = new File(folder,"PRINTER_APP_LOG.txt");
                     if (logFile.exists())
                     {
@@ -91,68 +133,10 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                     }else {
                         Log.e("NO","FOUND");
                     }
-
-
                 }catch (Exception ex){ex.printStackTrace();}
             }
-        });
-
-
-        try {
-            PermissionListener permissionlistener = new PermissionListener() {
-                @Override
-                public void onPermissionGranted() {
-                    Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
-
-                    /*if (SDK_INT >= Build.VERSION_CODES.R) {
-                        if (!Environment.isExternalStorageManager()) {
-                            Log.e("ALL PERMISSIONS","NO ALL PERM");
-                            Intent intent = new Intent();
-                            intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                            Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
-                            intent.setData(uri);
-                            startActivity(intent);
-                        }else {
-                            Log.e("ALL PERMISSIONS","GRANTED");
-                        }
-                        }*/
-
-                }
-
-                @Override
-                public void onPermissionDenied(List<String> deniedPermissions) {
-                    Toast.makeText(context, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
-                }
-            };
-
-            String[] Permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            };//Manifest.permission.MANAGE_EXTERNAL_STORAGE};
-
-            String[] Permissions2 = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
-            String[] perm ;
-            if (SDK_INT >= Build.VERSION_CODES.R){
-                perm = Permissions;
-            }else {
-                perm = Permissions2;
-            }
-
-            TedPermission.create()
-                    .setPermissionListener(permissionlistener)
-                    .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-                    .setPermissions(perm)
-                    .check();
-
-
-
-
-        }catch (Exception ex){
-            ex.printStackTrace();
-            PrinterExceptions.appendLog("Exception in set Settings "+ex.getMessage());
-        }
-
-
-        discoverBtn.setOnClickListener(new View.OnClickListener() {
+        });*/
+      /*  DISCOVER discoverBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
@@ -195,89 +179,117 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
 
 
             }
-        });
+        });*/
+       /*
+       STACK TRACE AS LIKE EPSON
+       try{
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String callHierarchyName = "";
+            int length = stackTrace.length;
+
+            for(int i = 0; i < 3; ++i) {
+                if (length >= 4 + i && stackTrace[3 + i].getFileName() != null) {
+                    callHierarchyName = callHierarchyName + " at " + stackTrace[3 + i].getFileName() + ":" + stackTrace[3 + i].getLineNumber();
+                }
+            }
+
+            makeLog("CALL"+callHierarchyName);
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }*/
 
 
         printDataBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                printThreadDetails("OnClickMethod");
+                //printThreadDetails("OnClickMethod");
                 if (!ipaddressEd.getText().toString().isEmpty() //){
                 ){
                     try {
 
                         ArrayList<MyData> arrayList = new ArrayList<>();
-                        arrayList.add(new MyData("This is 1st Print "));
-                        arrayList.add(new MyData("This is 2nd Print "));
-                        arrayList.add(new MyData("This is 3rdt Print "));
-                        arrayList.add(new MyData("This is 4th Print "));
-                        arrayList.add(new MyData("This is 5th Print "));
-                        arrayList.add(new MyData("This is 6th Print "));
+                        arrayList.add(new MyData("START: "+date.format(System.currentTimeMillis())));
 
                         MyPrinter pritner1 = new MyPrinter(PrinterPOCMultiple.this,
-                                KITCHEN_HOT, "DATA1",
+                                getPrinterName(KITCHEN_HOT), "DATA1",
                                 ipaddressEd.getText().toString().trim(),
                                 getPrinterModel(isCheck1.isChecked()),
                                 0,
                                 PrinterPOCMultiple.this);
                         pritner1.setMyDataArrayList(arrayList);
 
+                        Task task = new Task(pritner1);
+                        Manager.getManagerInstance().runTask(task);
 
-                        t1 = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                makeLog("In Thread 1");
-                                pritner1.proceedPrint();
-                            }
-                        });
-                        t1.start();
 
+                        ArrayList<MyData> arrayList2 = new ArrayList<>();
+                        arrayList2.add(new MyData("START: "+date.format(System.currentTimeMillis())));
                         if(!ipaddressEd2.getText().toString().isEmpty()) {
                             MyPrinter pritner2 = new MyPrinter(PrinterPOCMultiple.this,
-                                    KITCHEN_COLD, "DATA2",
+                                    getPrinterName(KITCHEN_COLD), "DATA2",
                                     ipaddressEd2.getText().toString().trim(),
                                     getPrinterModel(isCheck2.isChecked()),
                                     0,
                                     PrinterPOCMultiple.this);
-                            new Thread(new Runnable() {
+                            pritner2.setMyDataArrayList(arrayList2);
+
+                            Task task2 = new Task(pritner2);
+                            Manager.getManagerInstance().runTask(task2);
+
+                            /* new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    makeLog("In Thread 2");
+                                    makeLog("Running "+KITCHEN_COLD+" "+ColdCounter);
                                     pritner2.proceedPrint();
                                 }
-                            }).start();
+                            }).start();*/
                         }
 
                         //MISC
+                        ArrayList<MyData> arrayList3 = new ArrayList<>();
+                        arrayList3.add(new MyData("START: "+date.format(System.currentTimeMillis())));
                         if(!ipaddressEd3.getText().toString().isEmpty()) {
                             MyPrinter pritner3 = new MyPrinter(PrinterPOCMultiple.this,
-                                    KITCHEN_MISC, "DATA2",
+                                    getPrinterName(KITCHEN_MISC), "DATA2",
                                     ipaddressEd3.getText().toString().trim(),
                                     getPrinterModel(isCheck3.isChecked()),
                                     0,
                                     PrinterPOCMultiple.this);
-                            new Thread(new Runnable() {
+                            pritner3.setMyDataArrayList(arrayList3);
+
+                            Task task3 = new Task(pritner3);
+                            Manager.getManagerInstance().runTask(task3);
+                            /* new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    makeLog("In Thread 3");
+                                    makeLog("Running "+KITCHEN_MISC+" "+MiscCounter);
                                     pritner3.proceedPrint();
                                 }
-                            }).start();
+                            }).start();*/
                         }
+
+
+                        ArrayList<MyData> arrayList4 = new ArrayList<>();
+                        arrayList4.add(new MyData("START: "+date.format(System.currentTimeMillis())));
+
                         if(!ipaddressEd4.getText().toString().isEmpty()) {
                             MyPrinter pritner4 = new MyPrinter(PrinterPOCMultiple.this,
-                                    BAR_PRINTER, "DATA2",
+                                    getPrinterName(BAR_PRINTER), "DATA2",
                                     ipaddressEd4.getText().toString().trim(),
                                     getPrinterModel(isCheck4.isChecked()),
                                     0,
                                     PrinterPOCMultiple.this);
-                            new Thread(new Runnable() {
+                            pritner4.setMyDataArrayList(arrayList4);
+
+                            Task task4 = new Task(pritner4);
+                            Manager.getManagerInstance().runTask(task4);
+                           /* new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    makeLog("In Thread 4");
+                                    makeLog("Running "+BAR_PRINTER+" "+BarCounter);
                                     pritner4.proceedPrint();
                                 }
-                            }).start();
+                            }).start();*/
                         }
                     }catch (Exception ex){
                         makeLog("Something went wrong "+ex.getMessage());
@@ -411,4 +423,62 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                 .check();
 
     }*/
+
+
+  /*
+
+   PERMISSION
+   try {
+        PermissionListener permissionlistener = new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+                    *//*if (SDK_INT >= Build.VERSION_CODES.R) {
+                        if (!Environment.isExternalStorageManager()) {
+                            Log.e("ALL PERMISSIONS","NO ALL PERM");
+                            Intent intent = new Intent();
+                            intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                            Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
+                            intent.setData(uri);
+                            startActivity(intent);
+                        }else {
+                            Log.e("ALL PERMISSIONS","GRANTED");
+                        }
+                        }*//*
+
+            }
+
+            @Override
+            public void onPermissionDenied(List<String> deniedPermissions) {
+                Toast.makeText(context, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        String[] Permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        };//Manifest.permission.MANAGE_EXTERNAL_STORAGE};
+
+        String[] Permissions2 = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+        String[] perm ;
+        if (SDK_INT >= Build.VERSION_CODES.R){
+            perm = Permissions;
+        }else {
+            perm = Permissions2;
+        }
+
+        TedPermission.create()
+                .setPermissionListener(permissionlistener)
+                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+                .setPermissions(perm)
+                .check();
+
+
+
+
+    }catch (Exception ex){
+        ex.printStackTrace();
+        PrinterExceptions.appendLog("Exception in set Settings "+ex.getMessage());
+    }*/
+
 }

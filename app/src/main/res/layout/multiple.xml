@@ -40,14 +40,14 @@
         android:paddingEnd="20dp">
 
         <EditText
-            android:hint="IP Address KITCHEN HOT"
-            android:layout_marginTop="20dp"
+            android:id="@+id/ipaddress"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:id="@+id/ipaddress"
-            android:text=""
+            android:layout_alignParentLeft="true"
             android:layout_gravity="center_horizontal"
-            android:layout_alignParentLeft="true"/>
+            android:layout_marginTop="20dp"
+            android:hint="IP Address KITCHEN HOT"
+            android:text="@string/test_ipaddress" />
 
         <CheckBox
             android:layout_centerVertical="true"

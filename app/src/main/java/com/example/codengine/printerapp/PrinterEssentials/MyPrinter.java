@@ -28,13 +28,14 @@ import com.epson.eposprint.Print;
 import com.example.codengine.printerapp.R;
 import com.example.codengine.printerapp.Utils.AppUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 
 public class MyPrinter implements ReceiveListener {
 
     Activity context;
-    String printerName;
+    public String printerName;
     String data;
     String IPAddress;
     int printerType;
@@ -52,6 +53,7 @@ public class MyPrinter implements ReceiveListener {
     public ArrayList<MyData> getMyDataArrayList() {
         return myDataArrayList;
     }
+
 
     public void setMyDataArrayList(ArrayList<MyData> myDataArrayList) {
         this.myDataArrayList = myDataArrayList;
@@ -291,6 +293,8 @@ public class MyPrinter implements ReceiveListener {
         }
     }
 
+    SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     boolean createPrintData(String data){
         printThreadDetails("createPrintData");
         try{
@@ -308,7 +312,7 @@ public class MyPrinter implements ReceiveListener {
                 method = "addTextAlign";
                 printer.addTextAlign(Printer.ALIGN_CENTER);
 
-                method = "addImage";
+              /*  method = "addImage";
                 printer.addImage(logoData, 0, 0,
                         logoData.getWidth(),
                         logoData.getHeight(),
@@ -317,22 +321,42 @@ public class MyPrinter implements ReceiveListener {
                         Printer.HALFTONE_DITHER,
                         Printer.PARAM_DEFAULT,
                         Printer.COMPRESS_AUTO);
-
+                        */
+/*
                 method = "addFeedLine";
                 printer.addFeedLine(1);
-                method = "addTextSize";
+                method = "addFeedLine";
+                printer.addFeedLine(1);
+                method = "addTextSize";*/
                 printer.addTextSize(1, 1);
 
-            textData.append("\n");
+           // textData.append("\n");
             method = "addText";
-            printer.addText("#"+data);
+            printer.addText("" + printerName+" Print Success");
 
-                textData.append("\n");
-                method = "addText";
-                printer.addText("#" + printerName+" Print Success");
-                method = "addText";
+
+            method = "addFeedLine";
+            printer.addFeedLine(1);
+            method = "addFeedLine";
+            printer.addFeedLine(1);
+
+            method = "addText";
+            printer.addText(""+data);
+
+            method = "addFeedLine";
+            printer.addFeedLine(1);
+           /* method = "addFeedLine";
+            printer.addFeedLine(1);
+
+            method = "addText";
+            printer.addText("END: "+date.format(System.currentTimeMillis()));
+
+            method = "addFeedLine";
+            printer.addFeedLine(1);*/
+
+               /* method = "addText";
                 printer.addText(textData.toString());
-                textData.delete(0, textData.length());
+                textData.delete(0, textData.length());*/
                 method = "addCut";
                 printer.addCut(Printer.CUT_FEED);
 
@@ -570,7 +594,7 @@ public class MyPrinter implements ReceiveListener {
         context.runOnUiThread(new Runnable() {
             @Override
             public synchronized void run() {
-                Toast.makeText(context, ""+msg, Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, printerName+""+msg, Toast.LENGTH_SHORT).show();
                 if (myPrinterCallback!=null){
                     PrinterEvents events = new PrinterEvents();
                     events.setToast(true);
@@ -583,16 +607,16 @@ public class MyPrinter implements ReceiveListener {
             }
         });
 
-        //Log.e("MainActivity","==> "+msg);
-        makeLog("Toast-- Msg "+msg);
+        //makeLog("Toast-- Msg "+msg);
+        makeLog(msg);
     }
     private void makeLog(String msg){
         PrinterExceptions.appendLog(msg);
     }
 
     private void reportException(String reason){
-        if (!reason.contains(printerName))
-            reason = printerName + " : "+reason;
+     /*   if (!reason.contains(printerName))
+            reason = printerName + " : "+reason;*/
         makeToast(reason);
     }
 
@@ -827,5 +851,11 @@ public class MyPrinter implements ReceiveListener {
             makeLog("EXCEPTN printThreadDetails "+ex.getMessage());
             ex.printStackTrace();
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        Log.e(printerName+" FINALIZED ","IN FINALIZED METHOD");
+        super.finalize();
     }
 }
