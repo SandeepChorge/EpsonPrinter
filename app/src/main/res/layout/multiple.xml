@@ -12,6 +12,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="visible">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mad"
+            android:hint="Prefix"
+            android:id="@+id/prefix"
+            android:gravity="center"/>
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

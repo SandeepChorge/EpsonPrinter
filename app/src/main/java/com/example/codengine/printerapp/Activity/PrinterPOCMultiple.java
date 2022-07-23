@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.Settings;
 import android.util.Log;
@@ -63,6 +64,8 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
 
     Button discoverBtn;
     TextView discoverRes;
+    CountDownTimer countDownTimer;
+    EditText prefix;
 
     int ColdCounter = 1,BarCounter = 1,HotCounter = 1,MiscCounter = 1;
     private String getPrinterName(String PrinterName) {
@@ -85,23 +88,86 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                 BarCounter = BarCounter + 1;
                 break;
         }
+        if (prefix.getText().toString().isEmpty()){
+            res = "Tst_"+res;
+        }else {
+            res = prefix.getText().toString()+"_"+res;
+        }
+
         return res;
     }
     SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
+    private void printDetail(){
+        makeLog("NAME "+Thread.currentThread().getId()
+                +"\t ID "+Thread.currentThread().getName()
+                +"\t GRP "+Thread.currentThread().getThreadGroup().toString()
+                +"\t GRP_NM "+Thread.currentThread().getThreadGroup().getName()
+                +"\t PARENT "+Thread.currentThread().getThreadGroup().getParent().getName());
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.multiple);
+        init();
+
+
+
+
+        countDownTimer = new CountDownTimer(1200000,2000) {
+            @Override
+            public void onTick(long l) {
+                //makeLog("TICK "+(l/1000));
+                makeLog("ACTIVIE THREADS "+Manager.getManagerInstance().getActivaionCount());
+               // Manager.getManagerInstance().getActivaionCount();
+            }
+
+            @Override
+            public void onFinish() {
+
+            }
+        };
+
+        countDownTimer.start();
+
 
         PrinterExceptions.context = this;
 
-        Manager.CORE_POOL_SIZE = 10;//Runtime.getRuntime().availableProcessors()*2;
+        Manager.CORE_POOL_SIZE = 3;//Runtime.getRuntime().availableProcessors()*2;
         Manager.MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors()*2;//10;
-        PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
+        //PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
 
-        init();
+       /* makeLog("INSIDE onCreate");
+        printDetail();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    Thread.sleep(3000);
+                    printDetail();
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            printDetail();
+                        }
+                    }).start();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected void finalize() throws Throwable {
+                super.finalize();
+            }
+        }).start();*/
+
+
+
+
         try {
             com.epson.epos2.Log.setLogSettings(context, com.epson.epos2.Log.PERIOD_PERMANENT, com.epson.epos2.Log.OUTPUT_STORAGE, null, 0, 50, com.epson.epos2.Log.LOGLEVEL_LOW);
         } catch (Epos2Exception e) {
@@ -325,6 +391,7 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         context = this;
         appUtils = new AppUtils();
 
+        prefix = (EditText) findViewById(R.id.prefix);
         ipaddressEd = (EditText) findViewById(R.id.ipaddress);
         ipaddressEd2 = (EditText) findViewById(R.id.ipaddress2);
         ipaddressEd3 = (EditText) findViewById(R.id.ipaddress3);
@@ -360,7 +427,7 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                     //PrinterExceptions.appendLog("Toast-- Msg "+msg);
 
                 }catch (Exception ex){
-                    PrinterExceptions.appendLog("EXCEPTIONIN makeToastCallback-- Msg "+msg);
+                    makeLog("EXCEPTIONIN makeToastCallback-- Msg "+msg);
                     ex.printStackTrace();
                 }
             }
@@ -385,8 +452,15 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
     }
     private void makeLog(String msg){
         Log.e("PrinterPOCMultiple","==> "+msg);
-        PrinterExceptions.appendLog("Log-- Msg "+msg);
-        makeToast(msg);
+        //PrinterExceptions.appendLog("Log-- Msg "+msg);
+        //makeToast(msg);
+    }
+
+    @Override
+    protected void onDestroy() {
+        countDownTimer.cancel();
+        Manager.getManagerInstance().ShutDownThreadPool();
+        super.onDestroy();
     }
 
     /*public void TedPermission() {
