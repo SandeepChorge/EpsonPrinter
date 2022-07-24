@@ -68,6 +68,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
     EditText prefix;
 
     int ColdCounter = 1,BarCounter = 1,HotCounter = 1,MiscCounter = 1;
+
+
+
     private String getPrinterName(String PrinterName) {
         String res = "";
         switch (PrinterName) {
@@ -99,6 +102,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
     SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
+    public ArrayList<MyPrinter> printers;
+    public ArrayList<Task> tasks;
+
     private void printDetail(){
         makeLog("NAME "+Thread.currentThread().getId()
                 +"\t ID "+Thread.currentThread().getName()
@@ -112,15 +118,13 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         setContentView(R.layout.multiple);
         init();
 
-
-
-
+        Log.e("CORE "+Manager.CORE_POOL_SIZE,"\tMAX "+Manager.MAX_POOL_SIZE);
+            printers = new ArrayList<>();
+            tasks = new ArrayList<>();
         countDownTimer = new CountDownTimer(1200000,2000) {
             @Override
             public void onTick(long l) {
-                //makeLog("TICK "+(l/1000));
                 makeLog("ACTIVIE THREADS "+Manager.getManagerInstance().getActivaionCount());
-               // Manager.getManagerInstance().getActivaionCount();
             }
 
             @Override
@@ -128,14 +132,10 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
 
             }
         };
-
         countDownTimer.start();
-
-
         PrinterExceptions.context = this;
 
-        Manager.CORE_POOL_SIZE = 3;//Runtime.getRuntime().availableProcessors()*2;
-        Manager.MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors()*2;//10;
+
         //PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
 
        /* makeLog("INSIDE onCreate");
@@ -175,94 +175,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
             e.printStackTrace();
         }
 
-        Log.e("SDK INT ","-->"+SDK_INT);
+       // Log.e("SDK INT ","-->"+SDK_INT);
      //   printThreadDetails("OnCreateMethod");
 
-       /* findViewById(R.id.shareData).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-
-                    File folder =  context.getExternalCacheDir();//context.getFilesDir().getParentFile();
-                    //File logFile = new File(folder+File.separator+"RETRY_PRINTER_LOG.txt");
-                    File logFile = new File(folder,"PRINTER_APP_LOG.txt");
-                    if (logFile.exists())
-                    {
-
-                        Log.e("I HRER","YEP");
-                        Uri path = FileProvider.getUriForFile(PrinterPOCMultiple.this,"com.example.codengine.printerapp", logFile);
-                        Intent i = new Intent(Intent.ACTION_SEND);
-                        i.setType("text/plain");
-                        i.putExtra(Intent.EXTRA_STREAM, path);
-                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        startActivity(i);
-                    }else {
-                        Log.e("NO","FOUND");
-                    }
-                }catch (Exception ex){ex.printStackTrace();}
-            }
-        });*/
-      /*  DISCOVER discoverBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-
-                try {
-                   PrinterExceptions.appendLog("---------------------------------NEW-------------------------------- ");
-                    DiscoverPrinter discoverPrinter = new DiscoverPrinter(PrinterPOCMultiple.this, new DiscoverPrinter.DiscoveryResults() {
-                        @Override
-                        public void onDiscoveryResults(DiscoveryEvents discoveryEvent) {
-                            try {
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public synchronized void run() {
-                                        try {
-
-
-                                                String res  = discoverRes.getText().toString();
-                                                res = res+"\n"+discoveryEvent.result;
-                                                discoverRes.setText(res);
-
-
-                                        }catch (Exception e){
-                                            e.printStackTrace();
-                                            discoverRes.setText(discoverRes.getText().toString()+"\n"+e.getMessage());
-                                        }
-                                    }
-                                });
-
-
-                            }catch (Exception ex){
-                                ex.printStackTrace();
-                            }
-                        }
-                    });
-                    discoverPrinter.DisoveryStart(null);
-                }catch (Exception ex){
-                    ex.printStackTrace();
-                }
-
-
-            }
-        });*/
-       /*
-       STACK TRACE AS LIKE EPSON
-       try{
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            String callHierarchyName = "";
-            int length = stackTrace.length;
-
-            for(int i = 0; i < 3; ++i) {
-                if (length >= 4 + i && stackTrace[3 + i].getFileName() != null) {
-                    callHierarchyName = callHierarchyName + " at " + stackTrace[3 + i].getFileName() + ":" + stackTrace[3 + i].getLineNumber();
-                }
-            }
-
-            makeLog("CALL"+callHierarchyName);
-        }catch (Exception ex){
-            ex.printStackTrace();
-        }*/
 
 
         printDataBtn.setOnClickListener(new View.OnClickListener() {
@@ -284,7 +199,10 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                                 PrinterPOCMultiple.this);
                         pritner1.setMyDataArrayList(arrayList);
 
+                        printers.add(pritner1);
+
                         Task task = new Task(pritner1);
+                        tasks.add(task);
                         Manager.getManagerInstance().runTask(task);
 
 
@@ -299,7 +217,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                                     PrinterPOCMultiple.this);
                             pritner2.setMyDataArrayList(arrayList2);
 
+                            printers.add(pritner2);
                             Task task2 = new Task(pritner2);
+                            tasks.add(task2);
                             Manager.getManagerInstance().runTask(task2);
 
                             /* new Thread(new Runnable() {
@@ -323,7 +243,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                                     PrinterPOCMultiple.this);
                             pritner3.setMyDataArrayList(arrayList3);
 
+                            printers.add(pritner3);
                             Task task3 = new Task(pritner3);
+                            tasks.add(task3);
                             Manager.getManagerInstance().runTask(task3);
                             /* new Thread(new Runnable() {
                                 @Override
@@ -347,7 +269,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                                     PrinterPOCMultiple.this);
                             pritner4.setMyDataArrayList(arrayList4);
 
+                            printers.add(pritner4);
                             Task task4 = new Task(pritner4);
+                            tasks.add(task4);
                             Manager.getManagerInstance().runTask(task4);
                            /* new Thread(new Runnable() {
                                 @Override
@@ -403,9 +327,32 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         isCheck2 = (CheckBox) findViewById(R.id.check2);
         isCheck3 = (CheckBox) findViewById(R.id.check3);
         isCheck4 = (CheckBox) findViewById(R.id.check4);
-        //ipaddressEd.setText(appUtils.getStringPrefrences(context, constatnts.SH_APPPREFSOCKETDATA, constatnts.HOTKITCHNPRINTERIPADDRESS));;
 
         initDiscover();
+
+        findViewById(R.id.shareData).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+
+
+                    File folder =  context.getExternalCacheDir();
+                      File logFile = new File(folder,"PRINTER_APP_LOG.txt");
+                    if (logFile.exists())
+                    {
+                        Log.e("I HRER","YEP");
+                        Uri path = FileProvider.getUriForFile(PrinterPOCMultiple.this,"com.example.codengine.printerapp", logFile);
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType("text/plain");
+                        i.putExtra(Intent.EXTRA_STREAM, path);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(i);
+                    }else {
+                       Toast.makeText(context,"FILE NOT FOUND ",Toast.LENGTH_SHORT).show();
+                    }
+                }catch (Exception ex){ex.printStackTrace();}
+            }
+        });
     }
 
 
@@ -419,12 +366,9 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
             @Override
             public synchronized void run() {
                 try {
-
-                    //Toast.makeText(context, ""+msg, Toast.LENGTH_SHORT).show();
                     String res= resultTv.getText().toString();
                     res = res+"\n"+msg;
                     resultTv.setText(res);
-                    //PrinterExceptions.appendLog("Toast-- Msg "+msg);
 
                 }catch (Exception ex){
                     makeLog("EXCEPTIONIN makeToastCallback-- Msg "+msg);
@@ -432,28 +376,50 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                 }
             }
         });
-
-
-
     }
 
     @Override
     public void onMyPrinterCallback(String printerName, PrinterEvents printerEvents) {
+        try {
+
         if (printerEvents!=null) {
-            makeToast(printerEvents.getToastMsg());
-           /* if (t1!=null){
-                makeLog("Is Thread Alive "+t1.isAlive());
-            }else{
-                makeLog("Thread Is Null ");
-            }*/
-        }else {
-            makeToast(printerName+" PrinterEvents is null");
+            if (printerEvents.getToastMsg().equalsIgnoreCase("KILL") &&
+            printerEvents.getPrinter()!=null){
+                int index = printers.indexOf(printerEvents.getPrinter());
+
+                if (index>-1 && index<printers.size()){
+                    printers.get(index).callFinalize();
+                    tasks.get(index).killTask();
+                    printers.remove(index);
+                    tasks.remove(index);
+
+                }
+                 makeEntry(printerName,"printers size "+printers.size()+"\ttasks size "+tasks.size());
+            }else if(printerEvents.getToastMsg().equalsIgnoreCase("SUCCESS")){
+
+                String str = resultTv.getText().toString();
+                resultTv.setText(str+"\n"+printerName+" SUCCESS");
+
+            }
+        }
+        }catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
+
+    private void makeEntry(String printerName,String msg){
+        String str = Thread.currentThread().getId()+", "
+                +Thread.currentThread().getName()+", "
+                +printerName+", "
+                +"onMyPrinterCallback,"
+                +","
+                +msg;
+
+        PrinterExceptions.appendLog(str);
+    }
+
     private void makeLog(String msg){
         Log.e("PrinterPOCMultiple","==> "+msg);
-        //PrinterExceptions.appendLog("Log-- Msg "+msg);
-        //makeToast(msg);
     }
 
     @Override
@@ -462,97 +428,4 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         Manager.getManagerInstance().ShutDownThreadPool();
         super.onDestroy();
     }
-
-    /*public void TedPermission() {
-
-
-
-        PermissionListener permissionListener = new PermissionListener() {
-            @Override
-            public void onPermissionGranted() {
-               *//* if (appUtils.isNetworkAvailableWithToast(context)) {
-                    appUtils.simpleIntentFinish(context, Sync_device_activity.class, Bundle.EMPTY);
-                }*//*
-                PrinterExceptions.appendLog("Permissions Granted");
-            }
-
-            @Override
-            public void onPermissionDenied(ArrayList<String> deniedPermissions) {
-                appUtils.showToast(context, getString(R.string.Permission_Denied) + "\n" + deniedPermissions.toString());
-                finish();
-            }
-        };
-
-
-        TedPermission.with(this)
-                .setPermissionListener(permissionListener)
-                .setRationaleMessage(getString(R.string.Please_give_permission_for_app_functionality))
-                .setDeniedMessage(getString(R.string.If_you_reject_permission_you_can_not_use_this_service) + "\n\n" + getString(R.string.Please_turn_on_permissions_at))
-                .setGotoSettingButtonText("setting")
-                .setPermissions(Manifest.permission.INTERNET,
-                        Manifest.permission.ACCESS_NETWORK_STATE,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                .check();
-
-    }*/
-
-
-  /*
-
-   PERMISSION
-   try {
-        PermissionListener permissionlistener = new PermissionListener() {
-            @Override
-            public void onPermissionGranted() {
-                Toast.makeText(context, "Permission Granted", Toast.LENGTH_SHORT).show();
-
-                    *//*if (SDK_INT >= Build.VERSION_CODES.R) {
-                        if (!Environment.isExternalStorageManager()) {
-                            Log.e("ALL PERMISSIONS","NO ALL PERM");
-                            Intent intent = new Intent();
-                            intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                            Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
-                            intent.setData(uri);
-                            startActivity(intent);
-                        }else {
-                            Log.e("ALL PERMISSIONS","GRANTED");
-                        }
-                        }*//*
-
-            }
-
-            @Override
-            public void onPermissionDenied(List<String> deniedPermissions) {
-                Toast.makeText(context, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        String[] Permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        };//Manifest.permission.MANAGE_EXTERNAL_STORAGE};
-
-        String[] Permissions2 = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.INTERNET, Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-
-        String[] perm ;
-        if (SDK_INT >= Build.VERSION_CODES.R){
-            perm = Permissions;
-        }else {
-            perm = Permissions2;
-        }
-
-        TedPermission.create()
-                .setPermissionListener(permissionlistener)
-                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-                .setPermissions(perm)
-                .check();
-
-
-
-
-    }catch (Exception ex){
-        ex.printStackTrace();
-        PrinterExceptions.appendLog("Exception in set Settings "+ex.getMessage());
-    }*/
-
 }

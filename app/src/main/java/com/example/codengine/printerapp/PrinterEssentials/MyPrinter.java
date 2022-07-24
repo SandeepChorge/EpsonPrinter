@@ -1,5 +1,7 @@
 package com.example.codengine.printerapp.PrinterEssentials;
 
+
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -91,19 +93,6 @@ public class MyPrinter implements ReceiveListener {
     @Override
     public void onPtrReceive(Printer printergot, int code, PrinterStatusInfo printerStatusInfo, String s) {
         METHOD_NAME = "onPtrReceive";
-        isGotResult = true;
-
-       /* String ptrRes = "";
-        if (printer == null){
-            ptrRes = "MyPrinter is null";
-        }
-        if (printer!=null && printer == printergot){
-            ptrRes = "Myprinter and printerGot is same- setting as printergot";
-            printer = printergot;
-        }
-
-        reportException(ptrRes);
-*/
         try{
             context.runOnUiThread(new Runnable() {
                 @Override
@@ -116,8 +105,8 @@ public class MyPrinter implements ReceiveListener {
                         RetryEnum result = RetryEnum.RETRY_AND_DISCONNECT;
                         switch (code){
                             case Epos2CallbackCode.CODE_SUCCESS:
-                                //disconnect
                                 result = RetryEnum.DISCONNECT;
+                                reportSuccess();
                                 break;
                             case Epos2CallbackCode.CODE_PRINTING:
                                 //makeToast(printerName+" ON_PTR_RECEIVE "+ERR);
@@ -201,70 +190,7 @@ public class MyPrinter implements ReceiveListener {
         }
     }
 
-   /* public boolean discoverPrinter() {
-        printThreadDetails("discoverPrinter");
-        try {
-            makeLog("Discovering PRinter");
-            FilterOption filterOption = new FilterOption();
-            filterOption.setPortType(Discovery.PORTTYPE_TCP);
-            filterOption.setDeviceModel(Discovery.MODEL_ALL);
-            filterOption.setEpsonFilter(Discovery.FILTER_NAME);
-            filterOption.setDeviceType(Discovery.TYPE_PRINTER);
-            Discovery.start(context, filterOption, new DiscoveryListener() {
-                @Override
-                public void onDiscovery(DeviceInfo deviceInfo) {
-                    try {
-
-                        boolean gotDetails = false;
-                        if (deviceInfo!=null){
-                            if (deviceInfo.getDeviceType() == Discovery.TYPE_PRINTER){
-                                gotDetails = true;
-                                deviceInfo.getTarget();
-                                deviceInfo.getDeviceName();
-                                deviceInfo.getIpAddress();
-
-                            }
-                        }else{
-                            makeToast("DeviceInfo in disconvery is null");
-                        }
-
-                        if (gotDetails) {
-                            ERR = "TARGET: " + deviceInfo.getTarget() + "\n" +
-                                    "NAME: " + deviceInfo.getDeviceName() + "\n" +
-                                    "IPADDRESS: " + deviceInfo.getIpAddress() + "\n" +
-                                    "MAC ADDR: " + deviceInfo.getMacAddress();
-                            Discovery.stop();
-                        }else {
-                            ERR ="GOT NO PRINTER DETAILS";
-                        }
-                        reportException(ERR);
-                        retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
-                    }catch (Epos2Exception e){
-                        ERR = "DISCOVERY_ERR_2 : "+PrinterExceptions.getDiscoveryException(printerName,e);
-                        reportException(ERR);
-                        retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
-                    }catch (Exception e){
-                        ERR = "DISCOVERY_ERR_3 : "+e.getMessage();
-                        e.printStackTrace();
-                        reportException(ERR);
-                        retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
-                    }
-
-                }
-            });
-
-
-
-        }catch (Epos2Exception e){
-            ERR = "DISCOVERY_ERR : "+PrinterExceptions.getDiscoveryException(printerName,e);
-            reportException(ERR);
-            retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
-        }
-
-        return false;
-    }*/
-
-    boolean initializePrinter(){
+    void initializePrinter(){
         METHOD_NAME= "initializePrinter";
         try{
             setError(false);
@@ -296,15 +222,15 @@ public class MyPrinter implements ReceiveListener {
 
             }else {
                reportException("NO DATA TO BE BUILD");
-                return false;
+                //return false;
             }
-            return true;
+           // return true;
         }catch (Epos2Exception e){
             setError(true);
             ERR = "INITIALIZE_ERR : "+PrinterExceptions.getInitializeException(printerName,e);
             reportException(ERR);
             retryPrinterConnection(RetryEnum.SHOW_ERROR_POPUP,ERR);
-            return false;
+            //return false;
         }
     }
 
@@ -381,7 +307,8 @@ public class MyPrinter implements ReceiveListener {
         }
     }
 
-    boolean connectPrinter(){
+    void connectPrinter(){
+
         METHOD_NAME = "connectPrinter";
         try{
             setError(false);
@@ -430,13 +357,13 @@ public class MyPrinter implements ReceiveListener {
                     reportException(printerName+" Reboot Printer : ERR "+makeErrorMessage(status));
                 }
                 retryPrinterConnection(retryEnum,ERR);
-                return false;
+               // return false;
             }else
             {
                 sendDataToPrinter();
             }
 
-            return true;
+            //return true;
         }catch (Epos2Exception e){
             setError(true);
             ERR = "CONNECT_PRINTER_ERR : "+PrinterExceptions.getConnectException(printerName,e);
@@ -445,25 +372,25 @@ public class MyPrinter implements ReceiveListener {
                 retryPrinterConnection(RetryEnum.RETRY_AND_DISCONNECT,ERR);
             else
                 retryPrinterConnection(RetryEnum.AUTO_RETRY_NO_DISCONNECT,ERR);
-            return false;
+           // return false;
         }
     }
-    boolean sendDataToPrinter(){
+    void sendDataToPrinter(){
         METHOD_NAME="sendDataToPrinter";
         try{
             setError(false);
             printer.sendData(Printer.PARAM_DEFAULT);
             reportException("sendDataToPrinter done");
-            while (!isGotResult){
+           /* while (!isGotResult){
                 Log.e("IN WHILE","DID NOT GET RESULT");
-            }
-            return true;
+            }*/
+           // return true;
         }catch (Epos2Exception e){
             setError(true);
             ERR = "SEND_DATA_ERR : "+PrinterExceptions.getSendDataException(printerName,e);
             reportException(ERR);
             retryPrinterConnection(RetryEnum.RETRY_AND_DISCONNECT,ERR);
-            return false;
+            //return false;
         }
     }
 
@@ -676,10 +603,12 @@ public class MyPrinter implements ReceiveListener {
                 break;
             case SHOW_ERROR_POPUP:
                 errorDialog(false,error);
+
                 //appUtils.showAlertDialogwithMessage(context, error);
                 break;
             case DISCONNECT:
                 disconnectPrinter(true);
+                makeKill();
                 break;
             case DISCONNECT_AND_ERROR_POPUP:
                 disconnectPrinter(true);
@@ -713,9 +642,11 @@ public class MyPrinter implements ReceiveListener {
                     // appUtils.showAlertDialogwithMessage(context,);
                     if (withRetry){
                         showAlertDialogWithMessage(error);
+
                     }else {
                         reportException(error);
                         appUtils.showAlertDialogwithMessage(context, error);
+                        makeKill();
                         //Thread.currentThread().interrupt();
                     }
 
@@ -786,6 +717,7 @@ public class MyPrinter implements ReceiveListener {
                 }else {
                     reportException("Retry Count Exceeded");
                     appUtils.showAlertDialogwithMessage(context,printerName+" Retry Count Exceeded");
+                    makeKill();
                 }
                 subjectAlertDialog.dismiss();
             }
@@ -829,9 +761,56 @@ public class MyPrinter implements ReceiveListener {
         }
     }
 
+
+    private void makeKill(){
+        if (myPrinterCallback!=null){
+            PrinterEvents events = new PrinterEvents();
+            events.setToastMsg("KILL");
+            events.setPrinter(this);
+            myPrinterCallback.onMyPrinterCallback(printerName,events);
+        }
+    }
+
+    private void reportSuccess(){
+        if (myPrinterCallback!=null){
+            PrinterEvents events = new PrinterEvents();
+            events.setToastMsg("SUCCESS");
+            events.setPrinter(this);
+            myPrinterCallback.onMyPrinterCallback(printerName,events);
+        }
+    }
+
+    public void callFinalize(){
+        METHOD_NAME = "callFinalize";
+        setError(false);
+        try {
+               finalize();
+            reportException("callFinalize done");
+        }catch (Exception ex){
+            setError(true);
+            reportException("callFinalize Err");
+            ex.printStackTrace();
+        } catch (Throwable throwable) {
+            setError(true);
+            throwable.printStackTrace();
+            reportException("callFinalize Err2");
+        }
+    }
+
     @Override
     protected void finalize() throws Throwable {
-        Log.e(printerName+" FINALIZED ","IN FINALIZED METHOD");
-        super.finalize();
+
+       /* if (METHOD_NAME == "sendDataToPrinter"){
+                printers.add(this);
+                reportException("IN FINALIZE ADDED TO LIST");
+        }else {*/
+            this.context = null;
+            this.IPAddress = null;
+            this.data = null;
+            this.myPrinterCallback = null;
+            appUtils = null;
+            super.finalize();
+        //}
+       // super.finalize();
     }
 }

@@ -5,6 +5,16 @@ public class PrinterEvents {
     boolean isToast = false;
     String toastMsg = "";
 
+    MyPrinter printer;
+
+    public MyPrinter getPrinter() {
+        return printer;
+    }
+
+    public void setPrinter(MyPrinter printer) {
+        this.printer = printer;
+    }
+
     public boolean isToast() {
         return isToast;
     }
@@ -20,5 +30,7 @@ public class PrinterEvents {
     public void setToastMsg(String toastMsg) {
         this.toastMsg = toastMsg;
     }
+
+
 }
 

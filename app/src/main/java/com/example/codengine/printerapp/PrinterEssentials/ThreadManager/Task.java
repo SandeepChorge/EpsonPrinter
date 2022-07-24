@@ -34,6 +34,16 @@ public class Task implements Runnable{
         }
     }
 
+    public void killTask(){
+        try{
+            finalize();
+        }catch (Exception ex){
+            ex.printStackTrace();
+        }catch (Throwable t){
+            t.printStackTrace();
+        }
+    }
+
     private void makeLog(String msg){
 
         String str = Thread.currentThread().getId()+", "
@@ -43,5 +53,6 @@ public class Task implements Runnable{
                 +isError+", "
                 +msg;
         PrinterExceptions.appendLog(str);
+
     }
 }

@@ -12,8 +12,8 @@ public class Manager {
 
 
     public static int CORE_POOL_SIZE = 5;
-    public static int MAX_POOL_SIZE = 10;
-    private static final int KEEP_ALIVE_TIME = 20;//idle thread
+    public static int MAX_POOL_SIZE = Runtime.getRuntime().availableProcessors()+2;
+    private static final int KEEP_ALIVE_TIME = 10;//idle thread
 
     private static Manager managerInstance = null;
 
@@ -39,16 +39,15 @@ public class Manager {
         WorkQueue = new LinkedBlockingQueue<Runnable>();
         threadPoolExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE, KEEP_ALIVE_TIME,
                 TimeUnit.SECONDS, WorkQueue);
-        threadPoolExecutor.allowCoreThreadTimeOut(true);
-     //   Log.e("Core thread timeout"+threadPoolExecutor.allowsCoreThreadTimeOut(),"is set");
+        //threadPoolExecutor.allowCoreThreadTimeOut(true);
+
     }
 
     public void runTask(Runnable runnable) {
-        if(!threadPoolExecutor.isShutdown()){// && threadPoolExecutor.getActiveCount() != threadPoolExecutor.getMaximumPoolSize()){
-            Log.e("THREAD POOL "+threadPoolExecutor.getActiveCount(),"NOT EXCEEDED MAX POOL SIZE SO EXECUTE");
+        if(!threadPoolExecutor.isShutdown() || !threadPoolExecutor.isTerminating() || !threadPoolExecutor.isTerminated()){// && threadPoolExecutor.getActiveCount() != threadPoolExecutor.getMaximumPoolSize()){
             threadPoolExecutor.execute(runnable);
         } else {
-            Log.e("THREAD POOL IS SHuTDOWN "+threadPoolExecutor.isShutdown(),"SO NEW THREAD");
+            Log.e("THREAD POOL SHuTDOWN "+threadPoolExecutor.isShutdown(),"SO NEW THREAD");
             new Thread(runnable).start();
         }
 
@@ -71,5 +70,15 @@ public class Manager {
 
     public static Manager getManagerInstance() {
         return managerInstance;
+    }
+
+    public String getStatus() {
+        if (threadPoolExecutor!=null)
+            return ("ACT: "+threadPoolExecutor.getActiveCount()+
+                    "QUE: "+threadPoolExecutor.getQueue().size()+
+                    "TSK: "+threadPoolExecutor.getTaskCount());
+
+        else
+            return "EMPTY";
     }
 }
