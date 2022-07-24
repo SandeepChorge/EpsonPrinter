@@ -224,7 +224,7 @@ public class DiscoverPrinter {
     private void makeLog(String discovering_pRinter) {
         //Log.e("DISCOVER_PRINTER ","- "+discovering_pRinter);
         discovering_pRinter = "DIS_PRIN "+discovering_pRinter;
-        PrinterExceptions.appendLog(discovering_pRinter);
+        //PrinterExceptions.appendLog(discovering_pRinter);
     }
 
     private void triggerCallback(DisEventEnum eventEnum, String result, boolean isError){

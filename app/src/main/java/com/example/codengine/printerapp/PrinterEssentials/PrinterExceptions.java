@@ -297,8 +297,8 @@ public class PrinterExceptions {
 
     private static void makeLog(String key, String result, Epos2Exception e){
         Log.e(key+"",result);
-        appendLog("ERROR--KEY "+key+ " RESULT "+result +" Epos2Exception "+(e!=null?e.getMessage():"EXCEPTN NULL"));
-        //e.printStackTrace();
+       // appendLog("ERROR--KEY "+key+ " RESULT "+result +" Epos2Exception "+(e!=null?e.getMessage():"EXCEPTN NULL"));
+
     }
 
 
@@ -338,9 +338,9 @@ public class PrinterExceptions {
             SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String datePrefix = date.format(System.currentTimeMillis());
             //BufferedWriter for performance, true to set append to file flag
-            String entry = datePrefix+"-->\t"+text;
+            String entry = datePrefix+", "+text;
 
-            Log.e("-> "," "+entry);
+            Log.e(", "," "+entry);
 
             BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
             buf.newLine();

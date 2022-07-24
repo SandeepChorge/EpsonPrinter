@@ -20,6 +20,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+        <activity android:name=".Activity.ThreadActivity"
+            android:exported="false"/>
         <activity
             android:name=".Activity.PrinterPOCMultiple"
             android:exported="true">
