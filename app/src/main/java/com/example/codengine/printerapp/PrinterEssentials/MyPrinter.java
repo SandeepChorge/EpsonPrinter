@@ -2,6 +2,11 @@ package com.example.codengine.printerapp.PrinterEssentials;
 
 
 
+import static com.example.codengine.printerapp.Activity.PrinterPOCMultiple.BAR_PRINTER;
+import static com.example.codengine.printerapp.Activity.PrinterPOCMultiple.KITCHEN_COLD;
+import static com.example.codengine.printerapp.Activity.PrinterPOCMultiple.KITCHEN_HOT;
+import static com.example.codengine.printerapp.Activity.PrinterPOCMultiple.KITCHEN_MISC;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -249,8 +254,19 @@ public class MyPrinter implements ReceiveListener {
                 reportException("Printer is null in createPrintData returning");
                 return false;
             }
-
-
+            printer.addTextStyle(Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.COLOR_1);
+            printer.addFeedLine(1);
+          /* if (printerName.contains(KITCHEN_HOT)) {
+               printer.addTextStyle(Printer.PARAM_DEFAULT, Printer.TRUE, Printer.TRUE, Printer.COLOR_1);
+           }else if (printerName.contains(KITCHEN_COLD)) {
+                printer.addTextStyle(Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.COLOR_2);
+            }
+           else if (printerName.contains(KITCHEN_MISC)) {
+               printer.addTextStyle(Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.COLOR_3);
+           }else if (printerName.contains(BAR_PRINTER)) {
+               printer.addTextStyle(Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.PARAM_DEFAULT, Printer.COLOR_4);
+           }
+*/
                 method = "addTextAlign";
                 printer.addTextAlign(Printer.ALIGN_CENTER);
 
@@ -272,8 +288,7 @@ public class MyPrinter implements ReceiveListener {
             printer.addText("" + printerName+" Print Success");
 
 
-            method = "addFeedLine";
-            printer.addFeedLine(1);
+
             method = "addFeedLine";
             printer.addFeedLine(1);
 
@@ -283,6 +298,55 @@ public class MyPrinter implements ReceiveListener {
             method = "addFeedLine";
             printer.addFeedLine(1);
 
+            printer.addFeedLine(1);
+            printer.addText("COLOR PRINT");
+
+
+            printer.addTextSize(1, 2);
+            textData.append("\n");
+            textData.append("SANDEEP");
+            printer.addText(textData.toString());
+            textData.delete(0, textData.length());
+
+
+            printer.addFeedLine(1);
+            printer.addTextSize(1, 1);
+            textData.append("\n");
+            textData.append("CHORGE");
+            textData.append("\n");
+            printer.addText(textData.toString());
+            textData.delete(0, textData.length());
+
+            /*printer.addTextSize(1, 2);
+            printer.addTextFont(Printer.FONT_A);
+            printer.addFeedLine(1);
+            printer.addText("FONT A");
+            printer.addTextSize(2, 2);
+            printer.addLineSpace(20);
+            printer.addFeedLine(1);
+            printer.addText("FONT A");
+*/
+     /*       printer.addTextFont(Printer.FONT_B);
+            printer.addFeedLine(1);
+            printer.addText("FONT B");
+            printer.addFeedLine(1);
+            printer.addText("FONT B");
+
+            printer.addTextFont(Printer.FONT_C);
+            printer.addFeedLine(1);
+            printer.addText("FONT C");
+            printer.addFeedLine(1);
+            printer.addText("FONT C");
+
+            printer.addTextFont(Printer.FONT_D);
+            printer.addFeedLine(1);
+            printer.addText("FONT D");
+            printer.addFeedLine(1);
+            printer.addText("FONT D");
+            printer.addLineSpace(2);*/
+
+            printer.addFeedLine(1);
+            printer.addFeedLine(1);
                 method = "addCut";
                 printer.addCut(Printer.CUT_FEED);
 

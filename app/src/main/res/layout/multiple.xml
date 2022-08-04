@@ -58,7 +58,7 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="20dp"
             android:hint="IP Address KITCHEN HOT"
-            android:text="@string/test_ipaddress" />
+            android:text="@string/test_ipaddress2" />
 
         <CheckBox
             android:layout_centerVertical="true"

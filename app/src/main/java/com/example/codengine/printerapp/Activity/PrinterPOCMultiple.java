@@ -49,10 +49,10 @@ import java.util.concurrent.TimeUnit;
 
 public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.MyPrinterCallback {
 
-    private static final String KITCHEN_HOT = "HP";
-    private static final String KITCHEN_COLD = "CP";
-    private static final String KITCHEN_MISC = "MP";
-    private static final String BAR_PRINTER = "BP";
+    public static final String KITCHEN_HOT = "HP";
+    public static final String KITCHEN_COLD = "CP";
+    public static final String KITCHEN_MISC = "MP";
+    public static final String BAR_PRINTER = "BP";
     public static Printer printer = null;
     EditText ipaddressEd,ipaddressEd2,ipaddressEd3,ipaddressEd4;
     CheckBox isCheck1,isCheck2,isCheck3,isCheck4;
@@ -118,6 +118,8 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         setContentView(R.layout.multiple);
         init();
 
+        replace();
+
         Log.e("CORE "+Manager.CORE_POOL_SIZE,"\tMAX "+Manager.MAX_POOL_SIZE);
             printers = new ArrayList<>();
             tasks = new ArrayList<>();
@@ -136,8 +138,8 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
         PrinterExceptions.context = this;
 
 
-        //PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
-
+       // PrinterExceptions.appendLog("CORE_POOL_SIZE: "+Manager.CORE_POOL_SIZE+"\t MAX_POOL_SIZE: "+Manager.MAX_POOL_SIZE);
+        PrinterExceptions.appendLog("INSERT SOMETHINGT YEP");
        /* makeLog("INSIDE onCreate");
         printDetail();
         new Thread(new Runnable() {
@@ -290,6 +292,15 @@ public class PrinterPOCMultiple extends AppCompatActivity implements MyPrinter.M
                 }
             }
         });
+    }
+
+    private void replace() {
+        try {
+           // String str = "[{\"isOption\": \"1\", \"optionId\": \"0\", \"isDefault\": \"0\", \"isModifier\": \"0\", \"taxEnabled\": \"1\", \"modifier_id\": 728, \"modifier_cost\": \"$10.00\", \"modifier_name\": \"ADDED Large\", \"isMappedToOption\": \"0\", \"modifier_to_print\": \"728\", \"modifier_price_without_money_format\": \"10\"}, {\"isOption\": \"0\", \"optionId\": \"2553\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2553, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Deep Fry\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"2553\", \"modifier_price_without_money_format\": \"0\"}, {\"isOption\": \"0\", \"optionId\": \"2543\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2543, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Sea Urchin\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"2543\", \"modifier_price_without_money_format\": \"0\"}, {\"isOption\": \"0\", \"optionId\": \"2542\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2542, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Seaseed\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"2542\", \"modifier_price_without_money_format\": \"0\"}, {\"isOption\": \"0\", \"optionId\": \"0\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2489, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Vegetables\", \"isMappedToOption\": \"0\", \"modifier_to_print\": \"728\", \"modifier_price_without_money_format\": \"0.0\"}, {\"isOption\": \"0\", \"optionId\": \"0\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 172, \"modifier_cost\": \"0.0\", \"modifier_name\": \"ADDED modi01\", \"isMappedToOption\": \"0\", \"modifier_to_print\": \"2553\", \"modifier_price_without_money_format\": \"0.0\"}, {\"isOption\": \"0\", \"optionId\": \"2556\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2556, \"modifier_cost\": \"$10.00\", \"modifier_name\": \"ADDED Spicy Tuna\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"2543\", \"modifier_price_without_money_format\": \"10\"}, {\"isOption\": \"0\", \"optionId\": \"0\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 200, \"modifier_cost\": \"0.0\", \"modifier_name\": \"ADDED modifier\", \"isMappedToOption\": \"0\", \"modifier_to_print\": \"2542\", \"modifier_price_without_money_format\": \"0.0\"}, {\"isOption\": \"0\", \"optionId\": \"2555\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2555, \"modifier_cost\": \"$10.00\", \"modifier_name\": \"ADDED Jalapeno\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"1\", \"modifier_price_without_money_format\": \"10\"}, {\"isOption\": \"0\", \"optionId\": \"2526\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2526, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED spicy salmon\", \"isMappedToOption\": \"1\", \"modifier_ V/OKPRFL_cwxjkkq_RSB: to_print\": \"1\", \"modifier_price_without_money_format\": \"0\"}, {\"isOption\": \"0\", \"optionId\": \"0\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 229, \"modifier_cost\": \"0.0\", \"modifier_name\": \"ADDED spicy modifier group\", \"isMappedToOption\": \"0\", \"modifier_to_print\": \"1\", \"modifier_price_without_money_format\": \"0.0\"}, {\"isOption\": \"0\", \"optionId\": \"2556\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2556, \"modifier_cost\": \"$10.00\", \"modifier_name\": \"ADDED Spicy Tuna\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"1\", \"modifier_price_without_money_format\": \"10\"}, {\"isOption\": \"0\", \"optionId\": \"2548\", \"isDefault\": \"1\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2548, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Ginger\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"1\", \"modifier_price_without_money_format\": \"0\"}, {\"isOption\": \"0\", \"optionId\": \"2544\", \"isDefault\": \"0\", \"isModifier\": \"1\", \"taxEnabled\": \"1\", \"modifier_id\": 2544, \"modifier_cost\": \"$0.00\", \"modifier_name\": \"ADDED Korean Spicy Sauce\", \"isMappedToOption\": \"1\", \"modifier_to_print\": \"0\", \"modifier_price_without_money_format\": \"0\"}]";
+            // .replace("ADDED", "").replace("  ", "-").replace("---", "- ").replace("--", "- ");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private int getPrinterModel(boolean isDotMatrix){

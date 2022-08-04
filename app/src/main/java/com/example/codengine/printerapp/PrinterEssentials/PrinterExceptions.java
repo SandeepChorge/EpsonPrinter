@@ -302,7 +302,7 @@ public class PrinterExceptions {
     }
 
 
-    public static void appendLog( String text)
+    public static void appendLogOld( String text)
     {
 
         //    File folder =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
@@ -401,6 +401,61 @@ public class PrinterExceptions {
         }
         makeLog(key,result,e);
         return result;
+    }
+
+
+    public static void appendLog( String text)
+    {
+        try
+        {
+            if (context==null){
+                Log.e("CONTEXT NULL","YUP");
+                return;
+            }
+            File folder =  context.getFilesDir();
+
+            File dir = new File(folder,"SANDEEP");
+
+            if (!dir.exists()){
+                Log.e("CREATING DIR","YEP");
+                dir.createNewFile();
+            }
+
+            File logFile = new File(folder,"PRINTER_APP_LOG2.txt");
+            if (!logFile.exists())
+            {
+                try
+                {
+                    logFile.createNewFile();
+                }
+                catch (Exception e)
+                {
+                    Log.e("LOG FILE ","EXCCEPTION");
+                    e.printStackTrace();
+                }
+            }else
+            {
+                Log.e("LOG FILE PRESENT","IN ELSE");
+            }
+
+            SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String datePrefix = date.format(System.currentTimeMillis());
+            //BufferedWriter for performance, true to set append to file flag
+            String entry = datePrefix+", "+text;
+
+            Log.e(", "," "+entry);
+
+            BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+            buf.newLine();
+            buf.append(entry);
+            buf.newLine();
+            buf.close();
+        }
+        catch (Exception e)
+        {
+            Log.e("IN FINAL ","EXCEPTION");
+            e.printStackTrace();
+        }
     }
 
 }
